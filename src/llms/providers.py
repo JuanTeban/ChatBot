@@ -19,15 +19,21 @@ def get_llm_provider(
         if not settings.CEREBRAS_API_KEY:
             raise ValueError("CEREBRAS_API_KEY not configured")
         
-        model = ChatCerebras(
-            model=model_name or settings.CEREBRAS_MODEL,
-            temperature=temperature or settings.CEREBRAS_TEMPERATURE,
-            max_tokens=max_tokens or settings.CEREBRAS_MAX_TOKENS,
-            api_key=settings.CEREBRAS_API_KEY,
-            # Optimizaciones para Cerebras
-            streaming=True,
-            warm_tcp_connection=True,  # Reduce TTFT
-        )
+        # Configurar parámetros base
+        base_params = {
+            "model": model_name or settings.CEREBRAS_MODEL,
+            "temperature": temperature or settings.CEREBRAS_TEMPERATURE,
+            "max_tokens": max_tokens or settings.CEREBRAS_MAX_TOKENS,
+            "api_key": settings.CEREBRAS_API_KEY,
+            "streaming": True,
+        }
+        
+        # Añadir optimizaciones específicas de Cerebras a model_kwargs
+        base_params["model_kwargs"] = {
+            "warm_tcp_connection": True,  # Reduce TTFT
+        }
+        
+        model = ChatCerebras(**base_params)
         
         logger.info("llm_provider_created", 
                    provider=provider, 

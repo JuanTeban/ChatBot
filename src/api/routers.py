@@ -4,6 +4,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 import uuid
 import json
 from typing import AsyncGenerator
+from datetime import datetime
+import asyncio
 
 from src.api.schemas import (
     ChatRequest, ChatResponse, 
@@ -12,6 +14,7 @@ from src.api.schemas import (
 import src.agents.support_graph as graph_module
 from src.services.database import get_db, ConversationHistory
 from src.services.vector_store import vector_store_service
+from src.services.checkpointer import checkpointer_service
 from src.core.config import settings
 from src.core.logging import get_logger
 from langchain_core.messages import HumanMessage, AIMessage
@@ -45,7 +48,6 @@ async def chat_endpoint(
         }
         
         # Ejecutar grafo
-        # Después
         result = await graph_module.support_agent_graph.ainvoke(input_state, config)
         
         # Extraer respuesta
@@ -53,7 +55,6 @@ async def chat_endpoint(
         response_text = last_message.content if hasattr(last_message, 'content') else str(last_message)
         
         # Guardar en base de datos
-        # Guardar mensaje del usuario
         user_history = ConversationHistory(
             session_id=session_id,
             message_type="human",
@@ -62,7 +63,6 @@ async def chat_endpoint(
         )
         db.add(user_history)
         
-        # Guardar respuesta del bot
         bot_history = ConversationHistory(
             session_id=session_id,
             message_type="ai",
@@ -96,7 +96,7 @@ async def chat_endpoint(
 
 @router.post("/chat/stream")
 async def chat_stream_endpoint(request: ChatRequest):
-    """Endpoint de chat con streaming"""
+    """Endpoint de chat con streaming - Solución definitiva"""
     session_id = request.session_id or f"session_{uuid.uuid4().hex}"
     
     async def generate() -> AsyncGenerator[str, None]:
@@ -114,24 +114,27 @@ async def chat_stream_endpoint(request: ChatRequest):
                 "metadata": {"source": "api_stream"}
             }
             
-            # Stream eventos del grafo
-            async with graph_module.support_agent_graph.astream_events(
-                input_state, 
-                config,
-            ) as event_stream:
-                async for event in event_stream:
-                    if event["event"] == "on_chat_model_stream":
-                        content = event["data"]["chunk"].content
-                        if content:
-                            yield f"data: {json.dumps({'chunk': content})}\n\n"
-                    
-                    elif event["event"] == "on_chat_model_end":
-                        # Enviar metadata al final
-                        metadata = {
-                            "done": True,
-                            "session_id": session_id
-                        }
-                        yield f"data: {json.dumps(metadata)}\n\n"
+            # Ejecutar el grafo completo primero
+            result = await graph_module.support_agent_graph.ainvoke(input_state, config)
+            
+            # Extraer la respuesta final
+            last_message = result["messages"][-1]
+            response_text = last_message.content if hasattr(last_message, 'content') else str(last_message)
+            
+            # Simular streaming enviando palabra por palabra
+            if response_text:
+                words = response_text.split()
+                for word in words:
+                    yield f"data: {json.dumps({'chunk': word + ' '})}\n\n"
+                    await asyncio.sleep(0.05)  # Pausa para simular streaming
+            
+            # Enviar metadata final
+            yield f"data: {json.dumps({
+                'done': True, 
+                'session_id': session_id,
+                'intent': result.get('current_intent'),
+                'conversation_ended': result.get('conversation_ended', False)
+            })}\n\n"
             
         except Exception as e:
             logger.error("stream_error", error=str(e))
@@ -142,6 +145,7 @@ async def chat_stream_endpoint(request: ChatRequest):
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
+            "Connection": "keep-alive",
             "X-Accel-Buffering": "no"
         }
     )
@@ -209,7 +213,7 @@ async def health_check():
     services_status["checkpointer"] = "healthy" if checkpointer_service.checkpointer else "not_initialized"
     
     # Verificar Graph
-    services_status["agent_graph"] = "healthy" if support_agent_graph else "not_initialized"
+    services_status["agent_graph"] = "healthy" if graph_module.support_agent_graph else "not_initialized"
     
     return HealthResponse(
         status="healthy" if all(v == "healthy" for v in services_status.values()) else "degraded",

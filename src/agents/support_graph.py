@@ -1,4 +1,4 @@
-from langgraph.graph import StateGraph, END
+from langgraph.graph import StateGraph, END, START
 from src.agents.state import AgentState
 from src.agents import nodes
 from src.services.checkpointer import checkpointer_service
@@ -50,8 +50,8 @@ def create_support_graph():
         graph.add_node("validate_email", nodes.validate_email_node)
         graph.add_node("out_of_scope", nodes.out_of_scope_node)
         
-        # Definir flujo
-        graph.set_entry_point("classify_intent")
+        # Definir flujo - IMPORTANTE: usar START en lugar de set_entry_point
+        graph.add_edge(START, "classify_intent")
         
         # Enrutamiento condicional después de clasificar
         graph.add_conditional_edges(

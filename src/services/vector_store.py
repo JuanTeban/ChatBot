@@ -128,3 +128,8 @@ class VectorStoreService:
 
 # Instancia global
 vector_store_service = VectorStoreService()
+
+# Función standalone para usar en chains.py
+def get_retriever(collection_name: str, k: int = 3):
+    """Función standalone para obtener retriever - usada en chains.py"""
+    return vector_store_service.get_retriever(collection_name, k)

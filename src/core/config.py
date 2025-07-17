@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     # Database
     SQLITE_DB_PATH: str = os.path.join(BASE_DIR, 'data', 'sqlite', 'sessions.db')
     CHROMA_HOST: str = "localhost"
-    CHROMA_PORT: int = 8000
+    CHROMA_PORT: int = 8081  # 🔥 CORREGIDO: Cambiar de 8000 a 8081 para coincidir con docker-compose
     
     # Rate Limiting
     RATE_LIMIT_REQUESTS_PER_MINUTE: int = 50

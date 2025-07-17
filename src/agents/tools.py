@@ -8,10 +8,11 @@ import random
 logger = get_logger(__name__)
 
 @tool
-def search_faq_knowledge(query: str) -> str:
+async def search_faq_knowledge(query: str) -> str:
     """Busca en la base de conocimiento de preguntas frecuentes"""
     try:
-        documents = vector_store_service.search(
+        # Usar el método search del vector_store_service
+        documents = await vector_store_service.search(
             query=query,
             collection_name=settings.FAQ_COLLECTION,
             k=3
