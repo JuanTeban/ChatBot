@@ -50,22 +50,31 @@ def create_support_graph():
         graph.add_node("validate_email", nodes.validate_email_node)
         graph.add_node("out_of_scope", nodes.out_of_scope_node)
         
-        # Definir flujo - IMPORTANTE: usar START en lugar de set_entry_point
+        # Definir flujo
         graph.add_edge(START, "classify_intent")
         
         # Enrutamiento condicional después de clasificar
         graph.add_conditional_edges(
             "classify_intent",
-            route_after_intent
+            route_after_intent,
+            ["greeting", "faq_redirect", "support_query", "request_email", "out_of_scope", "validate_email", END]
         )
         
         # Edges de retorno a clasificación
         for node in ["greeting", "faq_redirect", "support_query", "out_of_scope"]:
-            graph.add_conditional_edges(node, should_end)
+            graph.add_conditional_edges(
+                node, 
+                should_end,
+                ["classify_intent", END]
+            )
         
         # Email flow
         graph.add_edge("request_email", "classify_intent")
-        graph.add_conditional_edges("validate_email", should_end)
+        graph.add_conditional_edges(
+            "validate_email", 
+            should_end,
+            ["classify_intent", END]
+        )
         
         # Compilar con checkpointer
         checkpointer = checkpointer_service.get_checkpointer()

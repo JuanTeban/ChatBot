@@ -4,6 +4,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from contextlib import asynccontextmanager
 import uvicorn
+import os
 
 from src.api.routers import router as api_router
 from src.core.config import settings
@@ -25,6 +26,9 @@ async def lifespan(app: FastAPI):
     logger.info("app_startup_initiated")
     
     try:
+        # Crear directorios necesarios
+        os.makedirs(os.path.dirname(settings.SQLITE_DB_PATH), exist_ok=True)
+        
         # Inicializar base de datos
         await init_db()
         logger.info("database_ready")
@@ -62,7 +66,7 @@ app = FastAPI(
 # Middleware
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Configurar según necesidades
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -74,22 +78,19 @@ app.add_middleware(TokenUsageMiddleware)
 @app.middleware("http")
 async def add_request_id(request: Request, call_next):
     request_id = str(uuid.uuid4())
-
-    # Crea un nuevo logger con el request_id atado
     log = logger.bind(request_id=request_id)
-
-    # Usa la nueva variable 'log' para todos los mensajes
     log.info("request_started", 
            method=request.method, 
            path=request.url.path)
-
     response = await call_next(request)
-
     log.info("request_completed", 
            status_code=response.status_code)
-
     response.headers["X-Request-ID"] = request_id
     return response
+
+# Crear directorios estáticos si no existen
+os.makedirs("static", exist_ok=True)
+os.makedirs("templates", exist_ok=True)
 
 # Montar archivos estáticos
 app.mount("/static", StaticFiles(directory="static"), name="static")
@@ -123,5 +124,5 @@ if __name__ == "__main__":
         host="0.0.0.0",
         port=8001,
         reload=settings.DEBUG,
-        log_config=None  # Usamos nuestro propio logging
+        log_config=None
     )

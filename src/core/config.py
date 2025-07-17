@@ -24,11 +24,11 @@ class Settings(BaseSettings):
     # Database
     SQLITE_DB_PATH: str = os.path.join(BASE_DIR, 'data', 'sqlite', 'sessions.db')
     CHROMA_HOST: str = "localhost"
-    CHROMA_PORT: int = 8081  # 🔥 CORREGIDO: Cambiar de 8000 a 8081 para coincidir con docker-compose
+    CHROMA_PORT: int = 8081
     
     # Rate Limiting
     RATE_LIMIT_REQUESTS_PER_MINUTE: int = 50
-    RATE_LIMIT_TOKENS_PER_DAY: int = 900000  # Cerebras free tier
+    RATE_LIMIT_TOKENS_PER_DAY: int = 900000
     
     # Application
     APP_NAME: str = "Support Agent"

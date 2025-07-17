@@ -18,20 +18,26 @@ class CheckpointerService:
     async def initialize(self):
         """Inicializa el checkpointer"""
         try:
-            # Simplemente creamos la instancia. No llamamos a .setup()
-            self.checkpointer = AsyncSqliteSaver.from_conn_string(
-                f"sqlite+aiosqlite:///{self.db_path}"
-            )
+            # Crear directorio si no existe
+            os.makedirs(os.path.dirname(self.db_path), exist_ok=True)
+            
+            # Crear la instancia del checkpointer
+            conn_string = f"sqlite+aiosqlite:///{self.db_path}"
+            self.checkpointer = AsyncSqliteSaver.from_conn_string(conn_string)
+            
             logger.info("checkpointer_initialized", path=self.db_path)
         except Exception as e:
             logger.error("checkpointer_init_failed", error=str(e))
             raise
 
     async def close(self):
-        """Cierra la conexión del checkpointer (gestionado por el grafo ahora)"""
-        # El grafo se encarga de cerrar la conexión, así que no hacemos nada aquí.
-        logger.info("checkpointer_closed (managed by graph)")
-        pass
+        """Cierra la conexión del checkpointer"""
+        if self.checkpointer:
+            try:
+                await self.checkpointer.close()
+                logger.info("checkpointer_closed")
+            except Exception as e:
+                logger.error("checkpointer_close_failed", error=str(e))
 
     def get_checkpointer(self):
         """Retorna el checkpointer"""

@@ -96,7 +96,7 @@ async def chat_endpoint(
 
 @router.post("/chat/stream")
 async def chat_stream_endpoint(request: ChatRequest):
-    """Endpoint de chat con streaming - Solución definitiva"""
+    """Endpoint de chat con streaming - Versión simplificada"""
     session_id = request.session_id or f"session_{uuid.uuid4().hex}"
     
     async def generate() -> AsyncGenerator[str, None]:
@@ -126,7 +126,7 @@ async def chat_stream_endpoint(request: ChatRequest):
                 words = response_text.split()
                 for word in words:
                     yield f"data: {json.dumps({'chunk': word + ' '})}\n\n"
-                    await asyncio.sleep(0.05)  # Pausa para simular streaming
+                    await asyncio.sleep(0.05)
             
             # Enviar metadata final
             yield f"data: {json.dumps({
@@ -167,6 +167,10 @@ async def upload_document(
                 detail=f"Tipo de archivo no soportado. Use: {allowed_types}"
             )
         
+        # Crear directorio temporal
+        import tempfile
+        os.makedirs("/tmp", exist_ok=True)
+        
         # Guardar temporalmente
         temp_path = f"/tmp/{uuid.uuid4()}{file_ext}"
         with open(temp_path, "wb") as f:
@@ -180,7 +184,6 @@ async def upload_document(
         )
         
         # Limpiar archivo temporal
-        import os
         os.remove(temp_path)
         
         if result["status"] == "error":
