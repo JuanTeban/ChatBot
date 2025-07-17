@@ -1,0 +1,45 @@
+/* Reset básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+/* Fondo limpio con gradiente sutil */
+body {
+  font-family: Arial, sans-serif;
+  background: linear-gradient(135deg, #f5faf5 0%, #eef6ee 100%);
+  color: #0d9648;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+/* Hero centrado */
+.hero {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}
+.hero-text h1 {
+  font-size: 3rem;
+  margin-bottom: 0.5rem;
+}
+.hero-text p {
+  font-size: 1.2rem;
+  color: #5a5a5a;
+}
+/* Pequeña sección de instrucción */
+.info {
+  padding: 1rem;
+  text-align: center;
+  background: rgba(255,255,255,0.8);
+}
+.info p {
+  font-size: 1rem;
+  color: #4a4a4a;
+}
+/* Asegura que el chat (bola) quede siempre encima */
+.ibm-web-chat-launcher {
+  z-index: 9999;
+}

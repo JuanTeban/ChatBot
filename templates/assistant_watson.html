@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Demo Watsonx Assistant</title>
+  <link rel="stylesheet" href="{{ url_for('static', path='css/demo.css') }}">
+</head>
+<body>
+  <header class="hero">
+    <div class="hero-text">
+      <h1>Demo Watsonx Assistant</h1>
+      <p>Interactúa con tu agente desde cualquier parte</p>
+    </div>
+  </header>
+
+  <section class="info">
+    <p>Pulsa el ícono verde en la esquina para abrir el chat.</p>
+  </section>
+
+  <!-- aquí va solo el script de IBM, sin contenedor extra -->
+  <script>
+    window.watsonAssistantChatOptions = {
+      integrationID: "855b33c0-daff-47fd-a9cb-ee76b7466bce",
+      region: "wxo-eu-de",
+      serviceInstanceID: "38907fdf-f85a-4f25-a9a3-212a4a4698b3",
+      onLoad: async (instance) => {
+        await instance.render();
+        instance.updateCSSVariables({
+          "BASE_COLOR": "#9fcf67",
+          "LAUNCHER_BACKGROUND": "#f0f4f0",
+          "TEXT_COLOR_ON_BASE": "#0d9648"
+        });
+      }
+    };
+    setTimeout(() => {
+      const s = document.createElement('script');
+      s.src = "https://web-chat.global.assistant.watson.appdomain.cloud/versions/latest/WatsonAssistantChatEntry.js";
+      document.head.appendChild(s);
+    });
+  </script>
+</body>
+</html>

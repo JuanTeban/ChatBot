@@ -1,0 +1,36 @@
+version: '3.8'
+
+services:
+  chromadb:
+    image: ghcr.io/chroma-core/chroma:latest
+    ports:
+      - "8081:8000"
+    volumes:
+      - ./data/chroma_data:/chroma/chroma
+    environment:
+      - CHROMA_SERVER_AUTH_CREDENTIALS_FILE=/chroma/server.htpasswd
+      - CHROMA_SERVER_AUTH_CREDENTIALS_PROVIDER=chromadb.auth.providers.HtpasswdFileServerAuthCredentialsProvider
+      - CHROMA_SERVER_AUTH_PROVIDER=chromadb.auth.providers.RequestsClientAuthProvider
+    networks:
+      - app-network
+
+  app:
+    build: .
+    ports:
+      - "8001:8001"
+    environment:
+      - CEREBRAS_API_KEY=${CEREBRAS_API_KEY}
+      - CHROMA_HOST=chromadb
+      - CHROMA_PORT=8000
+    volumes:
+      - ./data/sqlite:/app/data/sqlite
+      - ./documents:/app/documents
+    depends_on:
+      - chromadb
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
